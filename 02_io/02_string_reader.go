@@ -4,6 +4,8 @@ type Reader struct {
 	prevRune int
 }
 
+func NewReader(s string) *Reader { return &Reader{s, 0, -1} }
+
 func (r *Reader) Read(b []byte) (n int, err error) {
 	if r.i >= int64(len(r.s)) {
 		return 0, io.EOF
