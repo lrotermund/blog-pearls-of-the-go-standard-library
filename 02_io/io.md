@@ -52,8 +52,36 @@ func (r *Reader) Read(b []byte) (n int, err error) {
 ```
 (Source: [golang.org/src/strings/reader.go](https://golang.org/src/strings/reader.go?s=1042:1213#L28))
 
+What happens in these three examples? The `strings.Reader` first provides a function `NewReader(s string)` which creates a Reader struct with the given string and returns the pointer. On the returned Reader pointer the function `Read(b []byte)` can be executed, which reads the slice size of `b` from the string `s` and writes it back to `b`. 
+
+The result of `Read(b []byte)` is the number of bytes written to buffer `b`. So if this number is greater than zero, the read buffer can be used for further processing. Finally, check whether the error contained in the result is set and, if necessary, terminate the read operation.
 
 This simple implementation of the reader interface results in an incredible number of possible uses. This generic reader can now be used in every imaginable scenario, because it doesn't matter what originally created the reader, the function Read fills the buffer you give it with bytes, no more and no less.
+
+Let's take a look at some possible uses of the returned Reader `r`. 
+
+As already mentioned, here is an example with the direct use of the `Read(b []byte)` function.
+
+```golang
+b := make([]byte, 124)
+n, err := r.Read(b)
+```
+
+Via the package ioutil the function `ReadAll(r io.Reader)` can be used to read the entire content of `r`. As result a byte slice `[]byte` is returned.
+
+```golang
+b, err := ioutil.ReadAll(r)
+```
+
+If our Reader `r` contains a JSON string, it can be passed directly into a JSON decoder `NewDecoder(r io.Reader)`. With the function `Decode(v interface{})` our string can then be written into the passed pointer `gl`. 
+
+```golang
+type GoLibrary struct {
+	Name, Link string
+}
+var gl GoLibrary
+err := json.NewDecoder(r).Decode(&gl)
+```
 
 ## io Writer – the generic way to generate output
 
@@ -167,7 +195,7 @@ func main() {
 
 ## My Conclusion about the io library
 
-Input and output are the basics of a computer - what should it calculate if it receives no input and what should it output if it has no output medium? Even today in software architecture systems are still decoupled according to the IPO model and this is exactly what the team behind Go has created with the io library.
+Input and output are the basics of a computer - what should it calculate if it receives no input and what should it output if it has no output medium? Even today in software architecture systems are still decoupled according to the [IPO model](https://en.wikipedia.org/wiki/IPO_model) and this is exactly what the team behind Go has created with the io library.
 
 It is definitely worth taking a deeper look behind the scenes of io. I am convinced that some of the structs in Go projects could be enriched with the interfaces offered.
 
